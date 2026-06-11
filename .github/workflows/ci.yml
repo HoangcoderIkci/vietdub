@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
+      # Chỉ cài deps mà unit test thật sự import (edge-tts/deep-translator/faster-whisper
+      # đều lazy-import bên trong hàm nên không cần cho 18 unit test).
+      # Test network/slow bị deselect mặc định qua pytest.ini.
+      - name: Install test deps
+        run: pip install pytest pytest-asyncio yt-dlp
+
+      - name: Run unit tests
+        run: pytest -v

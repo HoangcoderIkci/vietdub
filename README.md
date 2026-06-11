@@ -1,5 +1,11 @@
 # vietdub
 
+[![CI](https://github.com/HoangcoderIkci/vietdub/actions/workflows/ci.yml/badge.svg)](https://github.com/HoangcoderIkci/vietdub/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
+![demo](docs/demo.gif)
+
 Tự động lồng tiếng Việt cho video YouTube tiếng Anh. YouTube không hỗ trợ auto-dub từ EN → VI natively; các extension trình duyệt là freemium và có lo ngại về bảo mật dữ liệu. **vietdub** là tool miễn phí, offline-output, hoàn toàn kiểm soát được: tải video → lấy transcript (3-tier fallback) → dịch → TTS (giọng Việt Hoài My/Nam Minh) → ghép timeline với atempo speedup → mix âm thanh gốc 15% + lồng tiếng Việt 85%.
 
 ## Demo
