@@ -1,0 +1,6 @@
+edge-tts
+deep-translator
+curl-cffi
+yt-dlp
+pytest
+pytest-asyncio
