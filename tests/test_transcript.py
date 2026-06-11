@@ -31,3 +31,14 @@ def test_merge_respects_max_duration():
     merged = merge_into_sentences(segs, max_dur=12.0)
     assert all(m.end - m.start <= 12.0 + 5.0 for m in merged)  # cắt khi vượt ngưỡng
     assert len(merged) > 1
+
+from vietdub.downloader import DownloadResult
+from vietdub.transcript import pick_tier
+
+def test_pick_tier_prefers_vi_then_en_then_whisper(tmp_path):
+    vi = tmp_path / "subs.vi.vtt"; vi.write_text("WEBVTT\n", encoding="utf-8")
+    en = tmp_path / "subs.en.vtt"; en.write_text("WEBVTT\n", encoding="utf-8")
+    base = dict(video_path=tmp_path / "v.mp4", video_id="x", title="", duration=1.0)
+    assert pick_tier(DownloadResult(**base, subs={"vi": vi, "en": en})) == ("vi-subs", vi)
+    assert pick_tier(DownloadResult(**base, subs={"en": en})) == ("en-subs", en)
+    assert pick_tier(DownloadResult(**base, subs={})) == ("whisper", None)

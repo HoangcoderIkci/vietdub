@@ -89,3 +89,28 @@ def _coalesce_sentence_halves(segs: list[Segment], max_dur: float = 12.0) -> lis
         else:
             out.append(s)
     return out
+
+from vietdub.downloader import DownloadResult
+
+def pick_tier(dl: DownloadResult) -> tuple[str, Path | None]:
+    if "vi" in dl.subs:
+        return "vi-subs", dl.subs["vi"]
+    if "en" in dl.subs:
+        return "en-subs", dl.subs["en"]
+    return "whisper", None
+
+def transcribe_whisper(video_path: Path, model_size: str = "large-v3-turbo") -> list[Segment]:
+    """Tầng 3: chỉ chạy khi không có phụ đề. CPU int8 — chậm, in cảnh báo."""
+    from faster_whisper import WhisperModel  # import muộn: faster-whisper nặng
+    print(f"[vietdub] Không có phụ đề -> Whisper {model_size} trên CPU (sẽ lâu)...")
+    model = WhisperModel(model_size, device="cpu", compute_type="int8")
+    raw, _info = model.transcribe(str(video_path), language="en", vad_filter=True)
+    return [Segment(round(s.start, 3), round(s.end, 3), s.text.strip(), "whisper", "en") for s in raw]
+
+def get_segments(dl: DownloadResult, whisper_model: str = "large-v3-turbo") -> list[Segment]:
+    tier, path = pick_tier(dl)
+    if tier == "vi-subs":
+        return merge_into_sentences(parse_vtt(path, language="vi", source="subs-auto"))
+    if tier == "en-subs":
+        return merge_into_sentences(parse_vtt(path, language="en", source="subs"))
+    return merge_into_sentences(transcribe_whisper(dl.video_path, whisper_model))
