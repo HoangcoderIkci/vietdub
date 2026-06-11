@@ -31,3 +31,28 @@ def test_never_places_before_cursor():
     starts = [p.start for p in placed]
     assert starts == sorted(starts)
     assert placed[2].start == 8.0          # khoảng lặng dài -> clip 3 về đúng vị trí gốc
+
+import subprocess, wave
+from vietdub.assembler import prepare_clip, render_dub_track, probe_duration, SR
+
+def _sine_mp3(path, dur=1.0):
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+                    "-i", f"sine=frequency=440:duration={dur}", str(path)], check=True)
+
+def test_render_dub_track_lengths(tmp_path):
+    mp3 = tmp_path / "a.mp3"; _sine_mp3(mp3, 1.0)
+    wav = tmp_path / "a.wav"; prepare_clip(mp3, 1.0, wav)
+    out = tmp_path / "dub.wav"
+    render_dub_track([PlacedClip(mp3, 2.0, 1.0)], [wav], total_dur=5.0, out_wav=out)
+    with wave.open(str(out)) as r:
+        dur = r.getnframes() / r.getframerate()
+    assert abs(dur - 5.0) < 0.05            # track đúng độ dài video
+    # 2 giây đầu phải là im lặng
+    with wave.open(str(out)) as r:
+        head = r.readframes(int(1.9 * SR))
+    assert head == b"\x00\x00" * (len(head) // 2)
+
+def test_prepare_clip_atempo_shortens(tmp_path):
+    mp3 = tmp_path / "a.mp3"; _sine_mp3(mp3, 2.0)
+    fast = tmp_path / "fast.wav"; prepare_clip(mp3, 1.35, fast)
+    assert abs(probe_duration(fast) - 2.0 / 1.35) < 0.1
